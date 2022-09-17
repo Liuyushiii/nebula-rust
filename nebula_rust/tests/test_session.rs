@@ -19,7 +19,10 @@ mod test_connection {
             .max_connection_pool_size(10)
             .address("localhost:9669".to_string());
 
+        // create connection pool
         let pool = graph_client::connection_pool::ConnectionPool::new(&conf).await;
+
+        // get session
         let session = pool.get_session("root", "nebula", true).await.unwrap();
 
         let resp = session.execute("YIELD 1").await.unwrap();

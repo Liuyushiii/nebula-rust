@@ -59,6 +59,42 @@ pub mod types {
         pub plan_desc: ::std::option::Option<crate::types::PlanDescription>,
         pub comment: ::std::option::Option<::std::vec::Vec<::std::primitive::u8>>,
     }
+    use std::fmt;
+    impl fmt::Display for ExecutionResponse {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "error_code:{},\nlatency_in_us:{},\ndata:{:?},\nspace_name:{:?},\nerror_msg{:?},\nplan_desc{:?},\ncomment:{:?}\n",
+                self.error_code, self.latency_in_us, self.data, self.space_name, self.error_msg, self.plan_desc, self.comment
+            )
+        }
+    }
+
+    impl ExecutionResponse{
+        pub fn show_data(&self){
+            if let common::types::ErrorCode(0i32) = self.error_code{ 
+            }else{
+                return;
+            }
+            for row in self.data.to_owned().unwrap().rows{
+                let values = row.values;
+                // let res = String::from_utf8(values);
+                for value in values{
+                    match value {
+                        common::types::Value::sVal(s) => {
+                            let res = String::from_utf8(s).unwrap();
+                            println!("{}", res);
+                        }
+                        common::types::Value::iVal(i) => {
+                            println!("{}", i);
+                        }
+                        _ => println!("{:?}", value)
+                    }
+                }
+                // println!("{:?}",values);
+            }
+        }
+    }
 
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct AuthResponse {
@@ -1222,6 +1258,11 @@ pub mod client {
         ) -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ::std::result::Result<crate::types::ExecutionResponse, crate::errors::graph_service::ExecuteError>> + ::std::marker::Send + 'static>> {
             use ::fbthrift::{ProtocolReader as _, ProtocolWriter as _};
             use ::futures::future::{FutureExt as _, TryFutureExt as _};
+
+            // println!("{:?}", arg_stmt);
+            // let  output = String::from_utf8(arg_stmt.clone()).unwrap();
+            // println!("{:?}", output);
+
             let request = ::fbthrift::serialize!(P, |p| ::fbthrift::protocol::write_message(
                 p,
                 "execute",
@@ -1275,6 +1316,8 @@ pub mod client {
                 }))
                 .boxed()
         }
+
+
         fn executeJson(
             &self,
             arg_sessionId: ::std::primitive::i64,

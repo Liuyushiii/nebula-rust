@@ -89,6 +89,8 @@ impl Connection {
     /// The returned error of `Result` only means the request/response status
     /// The error from Nebula Graph is still in `error_code` field in response, so you need check it
     /// to known wether the query execute succeeded
+    /// 使用当前会话id执行查询，通过之前的认证得到结果返回的错误只表示请求/响应状态.
+    /// NebulaGraph的错误仍然在响应的error_code字段中，所以你需要检查它是否知道查询执行成功
     pub async fn execute(
         &self,
         session_id: i64,

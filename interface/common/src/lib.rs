@@ -105,7 +105,16 @@ pub mod types {
         pub column_names: ::std::vec::Vec<::std::vec::Vec<::std::primitive::u8>>,
         pub rows: ::std::vec::Vec<crate::types::Row>,
     }
-
+    use std::fmt;
+    impl fmt::Display for DataSet {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "column_names: {:?},\nrows: {:?}\n",
+                self.column_names, self.rows
+            )
+        }
+    }
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Tag {
         pub name: ::std::vec::Vec<::std::primitive::u8>,
