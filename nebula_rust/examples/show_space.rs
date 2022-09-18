@@ -16,33 +16,30 @@ async fn main() {
     let pool = graph_client::connection_pool::ConnectionPool::new(&conf).await;
     let session = pool.get_session("root", "nebula", true).await.unwrap();
 
-    let resp = session.execute("show spaces").await.unwrap();
-    assert!(resp.error_code == common::types::ErrorCode::SUCCEEDED);
-    println!("SHOW SPACES: ");
     // data: Option<dataSet>
     // dataSet: column_names, rows
     // rows: Vec<Row>
     // Row: values
-    // values: Vec<Value>
-    /* 
-    for row in resp.data.unwrap().rows{
-        let values = row.values;
-        // let res = String::from_utf8(values);
-        for value in values{
-            if let common::types::Value::sVal(vec)= value {
-                let res = String::from_utf8(vec).unwrap();
-                println!("{}", res);
-            }
-        }
-        // println!("{:?}",values);
-    }
-    */
+    // values: Vec<Value>>
+    let resp = session.execute("show spaces").await.unwrap();
+    println!("SHOW SPACES: ");
     resp.show_data();
-    println!("==================");
+    println!("====================================");
 
     let resp = session.execute("show hosts").await.unwrap();
     println!("SHOW HOSTS: ");
-    // println!("{:?}", resp);
     resp.show_data();
-    // println!("{:?}", resp.data.as_ref().unwrap());
+    println!("====================================");
+
+    let _resp = session.execute("use basketballplayer").await;
+    let resp = session.execute("update vertex on player 'player100' set name='Tim Duncan'").await.unwrap();
+    println!("SET NAME: "); 
+    resp.show_data();
+    println!("====================================");
+
+    let _resp = session.execute("use basketballplayer").await;
+    let resp = session.execute("match (n) return n limit 10").await.unwrap();
+    println!("QUERY: match (n) return n limit 10");
+    resp.show_data();
+
 }

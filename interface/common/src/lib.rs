@@ -80,6 +80,29 @@ pub mod types {
         UnknownField(::std::primitive::i32),
     }
 
+    impl Value {
+        pub fn parse_simple_type(&self){
+            let value = self.clone();
+            match value {
+                Value::bVal(b) =>{
+                    println!("{}", b);
+                }
+                Value::iVal(i) =>{
+                    println!("{}", i);
+                }
+                Value::fVal(f) =>{
+                    println!("{:?}", f);
+                }
+                Value::sVal(s) =>{
+                    println!("{:?}", String::from_utf8(s).clone().unwrap());
+                }
+                _ =>{
+                    println!("todo...")
+                }
+            }
+        }    
+    }
+
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct NList {
         pub values: ::std::vec::Vec<crate::types::Value>,
