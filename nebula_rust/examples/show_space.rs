@@ -42,4 +42,14 @@ async fn main() {
     println!("QUERY: match (n) return n limit 10");
     resp.show_data();
 
+    let _resp = session.execute("use basketballplayer").await;
+    let resp = session.execute("match ()-[r:follow]->() return r limit 10").await.unwrap();
+    println!("QUERY: match ()-[r:follow]->() return r limit 10");
+    resp.show_data();
+
+    // MATCH p=(n:player)-[r]->(m:player) return p limit 20
+    let _resp = session.execute("use basketballplayer").await;
+    let resp = session.execute("MATCH p=(n:player)-[r]->(m:player) return p limit 20").await.unwrap();
+    println!("QUERY: MATCH p=(n:player)-[r]->(m:player) return p limit 20");
+    resp.show_data();
 }

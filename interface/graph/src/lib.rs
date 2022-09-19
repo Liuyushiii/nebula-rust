@@ -82,8 +82,10 @@ pub mod types {
             }
             for row in self.data.to_owned().unwrap().rows{
                 let values = row.values;
-                // let res = String::from_utf8(values);
                 for value in values{
+                    value.parse_simple_type();
+                    println!("====================")
+/*
                     match value {
                         common::types::Value::sVal(s) => {
                             let res = String::from_utf8(s).unwrap();
@@ -124,8 +126,8 @@ pub mod types {
                         }
                         _ => println!("{:?}", value)
                     }
+                    */
                 }
-                // println!("{:?}",values);
             }
         }
     }

@@ -41,12 +41,33 @@ pub mod types {
         pub day: ::std::primitive::i8,
     }
 
+
+    impl fmt::Display for Date {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "{}-{}-{}",
+                self.year, self.month, self.day
+            )
+        }
+    }
+
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct Time {
         pub hour: ::std::primitive::i8,
         pub minute: ::std::primitive::i8,
         pub sec: ::std::primitive::i8,
         pub microsec: ::std::primitive::i32,
+    }
+
+    impl fmt::Display for Time {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "{}:{}:{}:{}",
+                self.hour, self.minute, self.sec, self.microsec
+            )
+        }
     }
 
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -59,6 +80,17 @@ pub mod types {
         pub sec: ::std::primitive::i8,
         pub microsec: ::std::primitive::i32,
     }
+
+    impl fmt::Display for DateTime {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                "{}-{}-{} {}:{}:{}:{}",
+                self.year, self.month, self.day, self.hour, self.minute, self.sec, self.microsec
+            )
+        }
+    }
+    
 
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub enum Value {
@@ -84,20 +116,101 @@ pub mod types {
         pub fn parse_simple_type(&self){
             let value = self.clone();
             match value {
-                Value::bVal(b) =>{
+                Value::nVal(_nullType) => {
+                    println!("NullType")
+                }
+                Value::bVal(b) => {
                     println!("{}", b);
                 }
-                Value::iVal(i) =>{
+                Value::iVal(i) => {
                     println!("{}", i);
                 }
-                Value::fVal(f) =>{
-                    println!("{:?}", f);
+                Value::fVal(f) => {
+                    println!("{}", f.0);
                 }
-                Value::sVal(s) =>{
+                Value::sVal(s) => {
                     println!("{:?}", String::from_utf8(s).clone().unwrap());
                 }
-                _ =>{
-                    println!("todo...")
+                Value::dVal(d) => {
+                    println!("{}", d);
+                }
+                Value::tVal(t) => {
+                    println!("{}", t);
+                }
+                Value::dtVal(dt) => {
+                    println!("{}", dt);
+                }
+                Value::vVal(v) =>{
+                    let vertex = *v.clone();
+                    vertex.parse_Vertex();
+                }
+                Value::eVal(e) => {
+                    print!("src: ");
+                    e.src.parse_simple_type();
+                    print!("dst: ");
+                    e.dst.parse_simple_type();
+                    println!("type: {}", e.type_);
+                    println!("name: {}", String::from_utf8(e.name).unwrap());
+                    println!("ranking: {}", e.ranking);
+                    println!("properties:");
+                    for prop in e.props{
+                        let k = String::from_utf8(prop.0).unwrap();
+                        print!("{}: ", k);
+                        prop.1.parse_simple_type();
+                    }
+                }
+                Value::pVal(p) => {
+                    let src = p.src;
+                    src.parse_Vertex();
+                    let steps = p.steps;
+                    for step in steps{
+                        print!("dst: ");
+                        step.dst.parse_Vertex();
+                        println!("type: {}", step.type_);
+                        println!("name: {}", String::from_utf8(step.name).unwrap());
+                        println!("ranking: {}", step.ranking);
+                        println!("properties:");
+                        for prop in step.props{
+                            let k = String::from_utf8(prop.0).unwrap();
+                            print!("{}: ", k);
+                            prop.1.parse_simple_type();
+                        }
+                    }
+                }
+                Value::lVal(l) => {
+                    let list = *l.clone();
+                    for value in list.values{
+                        value.parse_simple_type();
+                    }
+                }
+                Value::mVal(m) => {
+                    let kvs = m.kvs;
+                    for kv in kvs{
+                        let k = String::from_utf8(kv.0).unwrap();
+                        print!("{}: ", k);
+                        kv.1.parse_simple_type();
+                    }
+                }
+                Value::uVal(u) => {
+                    for value in u.values{
+                        value.parse_simple_type();
+                    }
+                }
+                Value::gVal(g) => {
+                    let column_names = g.column_names;
+                    for column_name in column_names{
+                        println!("{}", String::from_utf8(column_name).unwrap());
+                    }
+                    let rows = g.rows;
+                    for row in rows{
+                        let values = row.values;
+                        for value in values{
+                            value.parse_simple_type();
+                        }
+                    }
+                }
+                Value::UnknownField(unknownFiled) =>{
+                    println!("UnknowFiled: {}", unknownFiled);
                 }
             }
         }    
@@ -150,6 +263,28 @@ pub mod types {
         pub tags: ::std::vec::Vec<crate::types::Tag>,
     }
 
+    impl Vertex{
+        pub fn parse_Vertex(self){
+            let vertex = self;
+            // vid sVal
+            let vid = vertex.vid;
+            vid.parse_simple_type();
+            // tags
+            for tag in vertex.tags{
+                // name
+                let name = String::from_utf8(tag.name).unwrap();
+                println!("{}", name);
+                // props
+                for prop in tag.props{
+                    let k = String::from_utf8(prop.0).unwrap();
+                    print!("{}: ", k);
+                    let v = prop.1;
+                    v.parse_simple_type();
+                }
+            }           
+        }
+    }
+
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
     pub struct Edge {
         pub src: crate::types::Value,
@@ -158,6 +293,15 @@ pub mod types {
         pub name: ::std::vec::Vec<::std::primitive::u8>,
         pub ranking: crate::types::EdgeRanking,
         pub props: ::std::collections::BTreeMap<::std::vec::Vec<::std::primitive::u8>, crate::types::Value>,
+    }
+
+    impl fmt::Display for Edge {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(
+                f,
+                ""
+            )
+        }
     }
 
     #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
