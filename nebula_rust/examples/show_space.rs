@@ -21,6 +21,8 @@ async fn main() {
     // rows: Vec<Row>
     // Row: values
     // values: Vec<Value>>
+    
+    /* 
     let resp = session.execute("show spaces").await.unwrap();
     println!("SHOW SPACES: ");
     resp.show_data();
@@ -52,4 +54,6 @@ async fn main() {
     let resp = session.execute("MATCH p=(n:player)-[r]->(m:player) return p limit 20").await.unwrap();
     println!("QUERY: MATCH p=(n:player)-[r]->(m:player) return p limit 20");
     resp.show_data();
+
+    */
 }

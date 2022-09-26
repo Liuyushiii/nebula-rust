@@ -29,6 +29,7 @@ pub struct Connection {
 
 impl Connection {
     /// Create connection with the specified [host:port] address
+    /// 使用指定的 [host:port] 地址创建连接
     pub async fn new_from_address(address: &str) -> Result<Connection> {
         let stream = TcpStream::connect(address).await?;
         let transport = AsyncTransport::new(
@@ -52,6 +53,8 @@ impl Connection {
     /// The returned error of `Result` only means the request/response status
     /// The error from Nebula Graph is still in `error_code` field in response, so you need check it
     /// to known wether authenticate succeeded
+    /// 通过用户名和密码进行身份验证 Result 返回的错误仅表示请求/响应状态 Nebula Graph 的错误仍在响应中的 error_code 字段中，
+    /// 因此您需要检查它以知道身份验证是否成功
     pub async fn authenticate(
         &self,
         username: &str,
