@@ -24,11 +24,9 @@ async fn main() {
         .username(username)
         .password(password);
 
-    let pool = graph_client::connection_pool::ConnectionPool::new(&conf);
+    let pool = graph_client::connection_test::ConnectionPool::new(&conf);
     
-    // let test = graph_client::pool:: Pool::new(pool);
-
-    pool.create_new_connections().await;
+    pool.create_new_connection().await;
     
     // pool.create_new_connections().await;
 

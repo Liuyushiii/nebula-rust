@@ -15,6 +15,10 @@ pub struct PoolConfig {
     pub min_connection_pool_size: u32,
     /// address of graph server
     pub addresses: std::vec::Vec<String>,
+    /// username of user
+    pub username: String,
+    /// password of user
+    pub password: String,
 }
 
 impl PoolConfig {
@@ -57,6 +61,18 @@ impl PoolConfig {
     pub fn address(&mut self, address: String) -> &mut Self {
         self.addresses.push(address);
         println!("{:?}", self.addresses.clone());
+        self
+    }
+    #[inline]
+    pub fn username(&mut self, username: String) -> &mut Self {
+        self.username = username;
+        // println!("{:?}", self.addresses.clone());
+        self
+    }
+    #[inline]
+    pub fn password(&mut self, password: String) -> &mut Self {
+        self.password = password;
+        // println!("{:?}", self.addresses.clone());
         self
     }
 }

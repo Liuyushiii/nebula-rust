@@ -6,6 +6,11 @@
 
 pub mod connection;
 pub mod connection_pool;
+// pub mod connection_pool_mutex;
 pub mod pool_config;
 pub mod session;
+pub mod connection_test;
+pub mod session_test;
+pub mod pool;
+// pub mod session_mutex;
 mod transport_response_handler;

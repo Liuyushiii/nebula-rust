@@ -5,7 +5,7 @@
  */
 
 use crate::graph_client::connection::Connection;
-use crate::graph_client::connection_pool::ConnectionPool;
+use crate::graph_client::connection_test::ConnectionPool;
 
 pub struct Session<'a> {
     session_id: i64,
