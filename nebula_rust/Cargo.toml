@@ -23,6 +23,7 @@ fbthrift = { version = "0.0.2" }
 fbthrift-transport = { path = "../fbthrift-transport", package = "nebula-fbthrift-transport" , features = ["tokio_io"], version = "0.0.2" }
 bytes = { version = "0.5" }
 futures = { version = "0.3.16" }
+rand = {version = "0.8.5"}
 
 [build-dependencies]
 

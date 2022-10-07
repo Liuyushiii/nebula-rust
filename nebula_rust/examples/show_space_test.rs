@@ -5,10 +5,11 @@
  */
 
 use nebula_rust::graph_client;
+use rand::Rng;
 
 #[tokio::main]
 async fn main() {
-    let address = String::from("root:root@49.52.27.120:9669/testGraph");
+    let address = String::from("root:root@192.168.106.129:9669/testGraph");
     
     let v:Vec<&str> = address.split('@').collect();
     let v2:Vec<&str> = v[1].split('/').collect();
@@ -30,18 +31,40 @@ async fn main() {
     
     // pool.create_new_connections().await;
 
+    fn get_random_string(len: usize) -> String{
+        let mut rng = rand::thread_rng();
+        let mut test: Vec<u8> = vec![0; len];
+        for i in &mut test{
+            let dig_or_char: u8 = rng.gen_range(0..=1);
+            println!("{}", dig_or_char);
+            match dig_or_char{
+                0 => *i = rng.gen_range(48..=57),
+                _ => *i = rng.gen_range(97..=122),
+            }
+        }
+        // rng.fill_bytes(&mut test);
+        // println!("{:?}", String::from_utf8(test).unwrap());
+        String::from_utf8(test).unwrap()
+    }
+    println!("{}", get_random_string(32));
+
+
     let session = pool.get_session("root", "root", true).await.unwrap();
 
-    // // data: Option<dataSet>
-    // // dataSet: column_names, rows
-    // // rows: Vec<Row>
-    // // Row: values
-    // // values: Vec<Value>>
+    // let _resp = session.execute("CREATE SPACE IF NOT EXISTS `TokenTransfer` (partition_num = 1, replica_factor = 1, vid_type = FIXED_STRING(50));").await.unwrap();
+    // std::thread::sleep(std::time::Duration::from_millis(5000));
+    // let _resp = session.execute("use TokenTransfer").await.unwrap();
+    // // std::thread::sleep(std::time::Duration::from_millis(2000));
+    // let _resp = session.execute("CREATE tag IF NOT EXISTS `transfer` (`from` string NOT NULL  , `to` string NOT NULL  , `value` int32 NOT NULL  )  ").await.unwrap();
+    // std::thread::sleep(std::time::Duration::from_millis(5000));
+    // let _resp = session.execute("CREATE SPACE IF NOT EXISTS `Poi$` (partition_num = 1, replica_factor = 1, vid_type = FIXED_STRING(50))").await.unwrap();
+    // // std::thread::sleep(std::time::Duration::from_millis(2000));
+    // let _resp = session.execute("use Poi").await.unwrap();
+    // std::thread::sleep(std::time::Duration::from_millis(5000));
+    // let _resp = session.execute("CREATE tag IF NOT EXISTS `transfer` (`from` string NOT NULL  , `to` string NOT NULL  , `value` int32 NOT NULL  )  ").await.unwrap();
     
-    let resp = session.execute("show spaces").await.unwrap();
-    println!("SHOW SPACES: ");
-    resp.show_data();
-    println!("====================================");
+    // let query = "use `TokenTransfer`; INSERT VERTEX transfer (from_account, to_account, value) VALUES \"transfer1\":(\"A\", \"B\", 12);";
+    // let _resp = session.execute(query).await.unwrap();
 
     // let resp = session.execute("show hosts").await.unwrap();
     // println!("SHOW HOSTS: ");
