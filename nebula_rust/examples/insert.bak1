@@ -1,0 +1,220 @@
+/* Copyright (c) 2021 vesoft inc. All rights reserved.
+ *
+ * This source code is licensed under Apache 2.0 License,
+ * attached with Common Clause Condition 1.0, found in the LICENSES directory.
+ */
+
+use std::collections::HashMap;
+
+use nebula_rust::graph_client::{nebula_schema::{ColType, Tag, DataType, InsertTagQuery, InsertEdgeQueryWithRank},connection_pool,session};
+use rand::Rng;
+
+#[tokio::main]
+async fn main() {
+    let address = "root:root@49.52.27.117:9669/testGraph";
+
+    let pool = connection_pool::ConnectionPool_nebula::new_pool(address);
+    
+    pool.create_new_connection().await;
+
+    fn get_random_string(len: usize) -> String{
+        let mut rng = rand::thread_rng();
+        let mut test: Vec<u8> = vec![0; len];
+        for i in &mut test{
+            let dig_or_char: u8 = rng.gen_range(0..=1);
+            match dig_or_char{
+                0 => *i = rng.gen_range(48..=57),
+                _ => *i = rng.gen_range(97..=122),
+            }
+        }
+        String::from_utf8(test).unwrap()
+    }
+    fn get_random_int(min: i32, max: i32) -> i32{
+        let mut rng = rand::thread_rng();
+        let res: i32 = rng.gen_range(min..=max);
+        res
+    }
+
+    let session = pool.get_session(true).await.unwrap();
+
+    session.show_spaces().await;
+    let mut all_queries = String::from("");
+    let space_name="testGraph";
+    
+    //insert tags
+    let mut insert_tag_queries: Vec<InsertTagQuery> = Vec::new();
+    let qian=String::from("abcdefghijklmnopqrstuvwxyz");
+    let mut addresses:Vec<String>=Vec::new();
+    /*
+    1~30 一般用户
+    31~40 汇聚一级节点
+    41~45 汇聚二级节点
+    46~60 发散节点
+    out 配个out节点说明转出
+    */
+    let mut mp:HashMap<i32, i32>= HashMap::new();
+    for i in 1..60{
+        let address=String::from("0x")+get_random_string(40).as_str();
+        addresses.push(String::from(address.clone()));
+        if i<=10 {
+            mp.insert(i, 500);
+        }
+        else{
+            mp.insert(i, 0);
+        }
+        let mut properties: HashMap<String, String> = HashMap::new();
+        properties.insert("id".to_string(), "\"".to_string()+address.as_str()+"\"");
+        let vid=address;
+        let tag_name=String::from("user");
+        let insert_tag_query=InsertTagQuery::new(String::from(space_name.clone()), tag_name, properties, vid);
+        insert_tag_queries.push(insert_tag_query);
+    }
+    let mut properties: HashMap<String, String> = HashMap::new();
+    properties.insert("id".to_string(), "\"".to_string()+"out"+"\"");
+    let vid=String::from("out");
+    let tag_name=String::from("user");
+    let insert_tag_query=InsertTagQuery::new(String::from(space_name.clone()), tag_name, properties, vid);
+    insert_tag_queries.push(insert_tag_query);
+    session.insert_tags(insert_tag_queries).await;
+
+    fn get_transfer(x:i32, y:i32, mp:&mut HashMap<i32,i32>,addresses:&mut Vec<String>, space_name:&str,block:String) -> InsertEdgeQueryWithRank{
+        let a=mp.get(&x).clone();
+        let v=get_random_int(1, *a.unwrap());
+        let from=mp.get_mut(&x);
+        *from.unwrap()-=v;
+        let to=mp.get_mut(&y);
+        *to.unwrap()+=v;
+        let mut properties:HashMap<String, String>=HashMap::new();
+        let ax=addresses.get((x-1) as usize).unwrap().clone();
+        let bx=addresses.get((y-1) as usize).unwrap().clone();
+        properties.insert("from_account".to_string(),"\"".to_string()+ax.as_str()+"\"");
+        properties.insert("to_account".to_string(),"\"".to_string()+bx.as_str()+"\"");
+        properties.insert("value".to_string(),"\"".to_string()+v.to_string().as_str()+"\"");
+        properties.insert("block".to_string(),block);
+        let insert_edge_query = InsertEdgeQueryWithRank::new(
+            String::from(space_name.clone()),
+            "tx".to_string(),
+            properties,
+            ax,
+            bx,
+            0
+        );
+        insert_edge_query
+    }
+    fn get_multitransfer(x:i32, y:i32, z:i32,mp:&mut HashMap<i32,i32>,addresses:&mut Vec<String>, space_name:&str,block:String, s:&mut Vec<InsertEdgeQueryWithRank>){
+        let a=mp.get(&x).clone();
+        let v=get_random_int(1, *a.unwrap());
+        let vv=get_random_int(1, v-1);
+        let mut from=mp.get_mut(&x);
+        *from.unwrap()-=v;
+        let mut to1=mp.get_mut(&y);
+        *to1.unwrap()+=(v-vv);
+        let mut to2=mp.get_mut(&z);
+        let outv=get_random_int(1, vv-1);
+        *to2.unwrap()+=(vv-outv);
+        let ax=addresses.get((x-1) as usize).unwrap().clone();
+        let bx=addresses.get((y-1) as usize).unwrap().clone();
+        let cx=addresses.get((z-1) as usize).unwrap().clone();
+        
+            let mut properties1:HashMap<String, String>=HashMap::new();
+            properties1.insert("from_account".to_string(),"\"".to_string()+ax.clone().as_str()+"\"");
+            properties1.insert("to_account".to_string(),"\"".to_string()+bx.clone().as_str()+"\"");
+            properties1.insert("value".to_string(),"\"".to_string()+(v-vv).to_string().as_str()+"\"");
+            properties1.insert("block".to_string(),block.clone());
+            let insert_edge_query = InsertEdgeQueryWithRank::new(
+                String::from(space_name.clone()),
+                "tx".to_string(),
+                properties1,
+                ax.clone(),
+                bx.clone(),
+                0
+            );
+            s.push(insert_edge_query);
+        
+        
+            let mut properties2:HashMap<String, String>=HashMap::new();
+            properties2.insert("from_account".to_string(),"\"".to_string()+ax.clone().as_str()+"\"");
+            properties2.insert("to_account".to_string(),"\"".to_string()+cx.clone().as_str()+"\"");
+            properties2.insert("value".to_string(),"\"".to_string()+vv.to_string().as_str()+"\"");
+            properties2.insert("block".to_string(),block.clone());
+            let insert_edge_query = InsertEdgeQueryWithRank::new(
+                String::from(space_name.clone()),
+                "tx".to_string(),
+                properties2,
+                ax.clone(),
+                cx.clone(),
+                0
+            );
+            s.push(insert_edge_query);
+        
+        
+            let mut properties3:HashMap<String, String>=HashMap::new();
+            properties3.insert("from_account".to_string(),"\"".to_string()+cx.clone().as_str()+"\"");
+            properties3.insert("to_account".to_string(),"\"".to_string()+"out"+"\"");
+            properties3.insert("value".to_string(),"\"".to_string()+outv.to_string().as_str()+"\"");
+            properties3.insert("block".to_string(),block.clone());
+            let insert_edge_query = InsertEdgeQueryWithRank::new(
+                String::from(space_name.clone()),
+                "tx".to_string(),
+                properties3,
+                cx.clone(),
+                String::from("out"),
+                0
+            );
+            s.push(insert_edge_query);
+        
+    }
+    //insert edges
+    let mut insert_edge_queries: Vec<InsertEdgeQueryWithRank> = Vec::new();
+    // 用户随机转账
+    for i in 1..30{
+        let x=get_random_int(1, 30);
+        let y=get_random_int(1, 30);
+        if x==y{
+            continue;
+        }
+        
+        let insert_edge_query = get_transfer(x, y, &mut mp, &mut addresses, space_name, String::from("1"));
+        insert_edge_queries.push(insert_edge_query);
+    }
+    // 第一阶段，一般用户到一级汇聚节点
+    for i in 1..20{
+        let x=get_random_int(1, 30);
+        let y=get_random_int(31, 40);
+
+        let insert_edge_query = get_transfer(x, y, &mut mp, &mut addresses, space_name,String::from("2"));
+        insert_edge_queries.push(insert_edge_query);
+    }
+    //第二阶段，汇聚一级节点转账汇聚二级节点
+    for i in 1..20{
+        let x=get_random_int(31, 40);
+        let y=get_random_int(41, 45);
+
+        let mut insert_edge_query = get_transfer(x, y, &mut mp, &mut addresses, space_name, String::from("3"));
+        insert_edge_queries.push(insert_edge_query);
+
+    }
+    //第三阶段，汇聚二级节点转账给发散节点
+    for i in 1..20{
+        let x=get_random_int(41, 45);
+        let y=get_random_int(46, 60);
+        let z=get_random_int(46, 60);
+        if y==z{
+            continue;
+        }
+        get_multitransfer(x, y, z,&mut mp, &mut addresses, space_name, String::from("4"),&mut insert_edge_queries);
+        get_multitransfer(x, y, z,&mut mp, &mut addresses, space_name, String::from("5"),&mut insert_edge_queries);
+    }
+    for i in 1..20{
+        let x=get_random_int(46, 60);
+        let y=get_random_int(46, 60);
+        let z=get_random_int(46, 60);
+        if y==z || x==y || x==z{
+            continue;
+        }
+        get_multitransfer(x, y, z,&mut mp, &mut addresses, space_name, String::from("6"),&mut insert_edge_queries);
+        get_multitransfer(x, y, z,&mut mp, &mut addresses, space_name, String::from("7"),&mut insert_edge_queries);
+    }
+
+    session.insert_edges(insert_edge_queries).await;
+}
